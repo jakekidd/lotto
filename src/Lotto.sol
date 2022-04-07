@@ -97,18 +97,15 @@ contract Lotto is ILotto {
         require(isCommitPhaseComplete(roundId), "Commit phase has not ended");
         require(!isRoundComplete(roundId), "Round has already ended");
 
-        // Make sure the caller has made a commitment for this round.
-        bytes32 _commit = rounds[roundId].commitments[msg.sender];
-        require(_commit != 0, "Caller is missing a commitment");
-
-        // Caller may only reveal once, erase their commitment.
-        rounds[roundId].commitments[msg.sender] = 0;
-
-        // Caller's number must match their commitment.
+        // Caller's number must match their commitment. This will also fail if the caller
+        // never made a commitment for the round, or they have already revealed their number.
         require(
-            keccak256(abi.encodePacked(number)) == _commit,
+            keccak256(abi.encodePacked(number)) == rounds[roundId].commitments[msg.sender],
             "Number does not match commitment"
         );
+
+        // Caller may only reveal their number once; erase their commitment.
+        rounds[roundId].commitments[msg.sender] = 0;
 
         // Bitwise OR the current revealed number for this round.
         rounds[roundId].seed ^= number;
