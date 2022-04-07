@@ -38,11 +38,12 @@ contract LottoTest is IUtils,DSTest {
 
         // Round ID should start undefined.
         assert(lotto.roundId() == 0);
-        vm.label(alice.addr, "Alice");
+        // vm.label(alice.addr, "Alice");
         uint aliceNumTickets = 5;
         // The first commit should start a new round.
-        vm.prank(alice.addr);
+        vm.startPrank(alice.addr);
         bytes32 roundId = lotto.commit{ value: depositAmount + aliceNumTickets * lotto.TICKET_PRICE() }(alice.numberHash);
+        vm.stopPrank();
         // The round ID should be defined.
         assert(roundId != 0);
         // The round ID should be reflected in contract state.
@@ -50,20 +51,20 @@ contract LottoTest is IUtils,DSTest {
         // Make sure start timestamp is correct.
         (uint256 start,,,) = lotto.rounds(roundId);
         assert(start == block.timestamp);
-        console.log("alice tickets", lotto.tickets(alice.addr));
-        
-        // assert(lotto.tickets(alice.addr) == aliceNumTickets);
+        uint tix = lotto.tickets(alice.addr);
+        assertTrue(tix == aliceNumTickets);
+
 
         // The second should return the same round.
         vm.label(bob.addr, "Bob");
         uint bobNumTickets = 3;
-        vm.prank(bob.addr);
+        vm.startPrank(bob.addr);
         bytes32 bobRoundId = lotto.commit{ value: depositAmount + bobNumTickets * lotto.TICKET_PRICE() }(bob.numberHash);
+        vm.stopPrank();
 
-        // Should be the same, shouldn't start a new round.
+        // // Should be the same, shouldn't start a new round.
         assert(bobRoundId == roundId);
-        // assert(lotto.tickets(bob.addr) == bobNumTickets);
-        console.log("bob tickets", lotto.tickets(bob.addr));
+        assert(lotto.tickets(bob.addr) == bobNumTickets);
 
         // Pay insufficient funds for deposit.
 
