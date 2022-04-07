@@ -4,13 +4,14 @@ pragma solidity >=0.8.4;
 import "../lib/ds-test/src/test.sol";
 import "../lib/forge-std/src/stdlib.sol";
 import "../lib/forge-std/src/Vm.sol";
+import "../lib/forge-std/src/console.sol";
 
-import "../src/interfaces/ILotto.sol";
 import "../src/Lotto.sol";
 
+import "./utils/IUtils.sol";
 import "./utils/Utils.sol";
 
-contract LottoTest is ILotto,DSTest {
+contract LottoTest is IUtils,DSTest {
     using stdStorage for StdStorage;
 
     Vm public constant vm = Vm(HEVM_ADDRESS);
@@ -19,15 +20,17 @@ contract LottoTest is ILotto,DSTest {
 
     Utils utils;
     Lotto lotto;
-    address payable[] internal users;
+    User alice;
+    User bob;
     address payable internal owner;
 
     function setUp() public {
         utils = new Utils();
-        owner = utils.createUser();
+        owner = utils.createUserAddress();
         vm.prank(address(owner));
         lotto = new Lotto();
-        users = utils.createUsers(10);
+        alice = utils.createUser();
+        bob = utils.createUser();
     }
 
     function testCommit() public {
@@ -35,27 +38,32 @@ contract LottoTest is ILotto,DSTest {
 
         // Round ID should start undefined.
         assert(lotto.roundId() == 0);
-        address alice = address(users[0]);
-        vm.label(alice, "Alice");
-        // I used a random number generator to generate this number, so it's very random.
-        uint aliceNumber = 10618275348263491499524870515570751408955109907629141527069;
-        bytes32 aliceHash = lotto.shaCommit(aliceNumber);
+        vm.label(alice.addr, "Alice");
         uint aliceNumTickets = 5;
-        uint aliceTicketPayment = aliceNumTickets * lotto.TICKET_PRICE();
         // The first commit should start a new round.
-        vm.prank(alice);
-        bytes32 roundId = lotto.commit{ value: depositAmount + aliceTicketPayment }(aliceHash);
+        vm.prank(alice.addr);
+        bytes32 roundId = lotto.commit{ value: depositAmount + aliceNumTickets * lotto.TICKET_PRICE() }(alice.numberHash);
+        // The round ID should be defined.
         assert(roundId != 0);
+        // The round ID should be reflected in contract state.
         assert(lotto.roundId() == roundId);
-        // assert(Round(lotto.rounds(roundId)).startTimestamp == block.timestamp);
-
+        // Make sure start timestamp is correct.
+        (uint256 start,,,) = lotto.rounds(roundId);
+        assert(start == block.timestamp);
+        console.log(lotto.tickets(alice.addr));
+        
+        // assert(lotto.tickets(alice.addr) == aliceNumTickets);
 
         // The second should return the same round.
-        // address bob = address(users[1]);
-        // vm.label(bob, "Bob");
-        // uint bobNumber = 618275826349149952487051557075140551099076291427069;
-        // bytes32 bobHash = lotto.shaCommit(bobNumber);
-        // uint bobNumTickets = 3;
+        vm.label(bob.addr, "Bob");
+        uint bobNumTickets = 3;
+        vm.prank(bob.addr);
+        bytes32 bobRoundId = lotto.commit{ value: depositAmount + bobNumTickets * lotto.TICKET_PRICE() }(bob.numberHash);
+
+        // Should be the same, shouldn't start a new round.
+        assert(bobRoundId == roundId);
+        // assert(lotto.tickets(bob.addr) == bobNumTickets);
+        console.log(lotto.tickets(bob.addr));
 
 
 
@@ -69,4 +77,5 @@ contract LottoTest is ILotto,DSTest {
 
         // You can overwrite a previous commit, but doing so is useless as it erases your previous tickets.
     }
+
 }
