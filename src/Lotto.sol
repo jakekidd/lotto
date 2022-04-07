@@ -55,11 +55,11 @@ contract Lotto is ILotto {
     }
 
     // User commits a hash for their secret number, contributes the required deposit and purchases tickets.
-    function commit(bytes32 _commit) external payable {
+    function commit(bytes32 _commit) external payable returns (bytes32) {
         // Caller must send at least the value of 1 ticket.
         require(
             msg.value >= TICKET_PRICE + DEPOSIT_AMOUNT,
-            "Needs deposit + ticket funds"
+            "Needs deposit + ticket payment"
         );
 
         // Start a new round if needed.
@@ -87,6 +87,8 @@ contract Lotto is ILotto {
         // NOTE: This includes the deposit. This is intentional: if the participants fails to call reveal, they forfeit
         // their deposit to the winnings pool. Additionally, using msg.value ensures we don't lose any dust.
         rounds[roundId].pool += msg.value;
+
+        return roundId;
     }
 
     // Intended to be called during the reveal phase, when participants may reveal their random numbers.
@@ -145,25 +147,24 @@ contract Lotto is ILotto {
         emit WinnerClaimed(_roundId, msg.sender);
     }
 
-    // Check if the current commitment phase has expired (assuming rounds have been initialized).
+    // Check if the current commitment phase has expired.
     function isCommitPhaseComplete(bytes32 _roundId)
         public
         view
         returns (bool)
     {
-        return
-            (block.timestamp >
-                rounds[_roundId].startTimestamp + COMMIT_PHASE_LENGTH) ||
-            roundId == 0;
+        return (block.timestamp >
+            rounds[_roundId].startTimestamp + COMMIT_PHASE_LENGTH);
     }
 
-    // Check whether the given round's commit and reveal phases have completed.
+    // Check whether the given round's commit and reveal phases have completed (assuming rounds have
+    // been initialized).
     function isRoundComplete(bytes32 _roundId) public view returns (bool) {
         return
-            block.timestamp >
-            rounds[_roundId].startTimestamp +
-                COMMIT_PHASE_LENGTH +
-                REVEAL_PHASE_LENGTH;
+            (block.timestamp >
+                rounds[_roundId].startTimestamp +
+                    COMMIT_PHASE_LENGTH +
+                    REVEAL_PHASE_LENGTH) || roundId == 0;
     }
 
     function nextRound() private {
@@ -187,7 +188,7 @@ contract Lotto is ILotto {
     }
 
     // Helper utility to get the sha commitment phrase (bytes) of a given number.
-    function shaCommit(uint256 secretNumber) public pure returns (bytes32) {
+    function shaCommit(uint256 secretNumber) external pure returns (bytes32) {
         return keccak256(abi.encodePacked(secretNumber));
     }
 }
