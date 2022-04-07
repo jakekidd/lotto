@@ -134,11 +134,12 @@ contract Lotto is ILotto {
         emit WinnerClaimed(_roundId, msg.sender);
     }
 
-    // Check if the current commitment phase has expired, and that we have sufficient commitments.
+    // Check if the current commitment phase has expired (assuming rounds have been initialized).
     function isCommitPhaseComplete(bytes32 _roundId) public view returns (bool) {
         return (block.timestamp > rounds[_roundId].startTimestamp + commitPhaseLength) || roundId == 0;
     }
 
+    // Check whether the given round's commit and reveal phases have completed.
     function isRoundComplete(bytes32 _roundId) public view returns (bool) {
         return block.timestamp > rounds[_roundId].startTimestamp + commitPhaseLength + revealPhaseLength;
     }
