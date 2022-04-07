@@ -26,16 +26,16 @@ import "./interfaces/ILotto.sol";
 contract Lotto is ILotto {
 
     // The time that 1 commitment phase takes (ideally). After this period, we enter the reveal round.
-    uint constant commitPhaseLength = 6 hours;
+    uint constant public COMMIT_PHASE_LENGTH = 6 hours;
     // The time after which the determined revealed number for a round is solidified.
-    uint constant revealPhaseLength = 2 hours;
+    uint constant public REVEAL_PHASE_LENGTH = 2 hours;
     // Deposit that is refunded to the participant if they reveal their number before the reveal
     // phase expires.
-    uint constant depositAmount = 0.01 ether;
+    uint constant public DEPOSIT_AMOUNT = 0.01 ether;
     // Price of pushing a single entry into the lottery.
-    uint constant ticketPrice = 0.01 ether;
+    uint constant public TICKET_PRICE = 0.01 ether;
     // Maximum number of tickets per commitment.
-    uint constant maxTickets = 100;
+    uint constant public MAX_TICKETS = 100;
 
     address public owner;
 
@@ -58,7 +58,7 @@ contract Lotto is ILotto {
     // User commits a hash for their secret number, contributes the required deposit and purchases tickets.
     function commit(bytes32 _commit) external payable {
         // Caller must send at least the value of 1 ticket.
-        require(msg.value >= ticketPrice + depositAmount, "Must send the deposit and ticket amounts");
+        require(msg.value >= TICKET_PRICE + DEPOSIT_AMOUNT, "Needs deposit + ticket funds");
 
         // Start a new round if needed.
         if (isRoundComplete(roundId)) {
@@ -74,8 +74,8 @@ contract Lotto is ILotto {
         // Number of tickets that the caller can afford with the value sent.
         // NOTE: Caller can technically send in more than the maximum, but any leftover gets added into the pot and
         // gives them no additional benefit.
-        uint numTickets = (msg.value - depositAmount) / 0.01 ether;
-        numTickets = numTickets > maxTickets ? maxTickets : numTickets;
+        uint numTickets = (msg.value - DEPOSIT_AMOUNT) / 0.01 ether;
+        numTickets = numTickets > MAX_TICKETS ? MAX_TICKETS : numTickets;
         tickets[msg.sender] = numTickets;
 
         // Add the full message value to the round's current pool.
@@ -107,8 +107,8 @@ contract Lotto is ILotto {
 
         // Subtract the deposit from the pool, then refund the deposit portion to the caller. This
         // is to reward participation and incentivize revealing the amount.
-        rounds[roundId].pool -= depositAmount;
-        payable(msg.sender).transfer(depositAmount);
+        rounds[roundId].pool -= DEPOSIT_AMOUNT;
+        payable(msg.sender).transfer(DEPOSIT_AMOUNT);
     }
 
     // If you're calling this (and it doesn't revert) - congrats! You've won the lottery!
@@ -136,12 +136,12 @@ contract Lotto is ILotto {
 
     // Check if the current commitment phase has expired (assuming rounds have been initialized).
     function isCommitPhaseComplete(bytes32 _roundId) public view returns (bool) {
-        return (block.timestamp > rounds[_roundId].startTimestamp + commitPhaseLength) || roundId == 0;
+        return (block.timestamp > rounds[_roundId].startTimestamp + COMMIT_PHASE_LENGTH) || roundId == 0;
     }
 
     // Check whether the given round's commit and reveal phases have completed.
     function isRoundComplete(bytes32 _roundId) public view returns (bool) {
-        return block.timestamp > rounds[_roundId].startTimestamp + commitPhaseLength + revealPhaseLength;
+        return block.timestamp > rounds[_roundId].startTimestamp + COMMIT_PHASE_LENGTH + REVEAL_PHASE_LENGTH;
     }
 
     function nextRound() private {
