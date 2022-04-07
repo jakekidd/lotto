@@ -50,7 +50,7 @@ contract LottoTest is IUtils,DSTest {
         // Make sure start timestamp is correct.
         (uint256 start,,,) = lotto.rounds(roundId);
         assert(start == block.timestamp);
-        console.log(lotto.tickets(alice.addr));
+        console.log("alice tickets", lotto.tickets(alice.addr));
         
         // assert(lotto.tickets(alice.addr) == aliceNumTickets);
 
@@ -63,7 +63,7 @@ contract LottoTest is IUtils,DSTest {
         // Should be the same, shouldn't start a new round.
         assert(bobRoundId == roundId);
         // assert(lotto.tickets(bob.addr) == bobNumTickets);
-        console.log(lotto.tickets(bob.addr));
+        console.log("bob tickets", lotto.tickets(bob.addr));
 
 
 
