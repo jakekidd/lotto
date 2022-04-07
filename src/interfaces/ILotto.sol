@@ -2,16 +2,15 @@
 pragma solidity >=0.8.4;
 
 interface ILotto {
-
     struct Round {
         // Block timestamp of when the round started.
-        uint startTimestamp;
+        uint256 startTimestamp;
         // Pool of winnings.
-        uint pool;
+        uint256 pool;
         // Winner of this round.
         address winner;
         // Random number for this round, which is generated from users' secret numbers.
-        uint seed;
+        uint256 seed;
         // depositor addr => sha3 encrypted random number commitments.
         mapping(address => bytes32) commitments;
     }

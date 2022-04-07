@@ -24,18 +24,17 @@ import "./interfaces/ILotto.sol";
  * discontinued project RANDAO. See: https://github.com/randao/randao
  */
 contract Lotto is ILotto {
-
     // The time that 1 commitment phase takes (ideally). After this period, we enter the reveal round.
-    uint constant public COMMIT_PHASE_LENGTH = 6 hours;
+    uint256 public constant COMMIT_PHASE_LENGTH = 6 hours;
     // The time after which the determined revealed number for a round is solidified.
-    uint constant public REVEAL_PHASE_LENGTH = 2 hours;
+    uint256 public constant REVEAL_PHASE_LENGTH = 2 hours;
     // Deposit that is refunded to the participant if they reveal their number before the reveal
     // phase expires.
-    uint constant public DEPOSIT_AMOUNT = 0.01 ether;
+    uint256 public constant DEPOSIT_AMOUNT = 0.01 ether;
     // Price of pushing a single entry into the lottery.
-    uint constant public TICKET_PRICE = 0.01 ether;
+    uint256 public constant TICKET_PRICE = 0.01 ether;
     // Maximum number of tickets per commitment.
-    uint constant public MAX_TICKETS = 100;
+    uint256 public constant MAX_TICKETS = 100;
 
     address public owner;
 
@@ -46,7 +45,7 @@ contract Lotto is ILotto {
     mapping(bytes32 => Round) public rounds;
 
     // Depositor tickets purchased for the current round.
-    mapping(address => uint) public tickets;
+    mapping(address => uint256) public tickets;
 
     // Participants in the current round.
     address[] public participants;
@@ -58,14 +57,20 @@ contract Lotto is ILotto {
     // User commits a hash for their secret number, contributes the required deposit and purchases tickets.
     function commit(bytes32 _commit) external payable {
         // Caller must send at least the value of 1 ticket.
-        require(msg.value >= TICKET_PRICE + DEPOSIT_AMOUNT, "Needs deposit + ticket funds");
+        require(
+            msg.value >= TICKET_PRICE + DEPOSIT_AMOUNT,
+            "Needs deposit + ticket funds"
+        );
 
         // Start a new round if needed.
         if (isRoundComplete(roundId)) {
             nextRound();
         } else {
             // We're still in an open lottery round - make sure the commitment phase hasn't already ended.
-            require(!isCommitPhaseComplete(roundId), "Commit phase is already complete");
+            require(
+                !isCommitPhaseComplete(roundId),
+                "Commit phase is already complete"
+            );
         }
 
         // Add the commitment to the round under the caller's address.
@@ -74,7 +79,7 @@ contract Lotto is ILotto {
         // Number of tickets that the caller can afford with the value sent.
         // NOTE: Caller can technically send in more than the maximum, but any leftover gets added into the pot and
         // gives them no additional benefit.
-        uint numTickets = (msg.value - DEPOSIT_AMOUNT) / 0.01 ether;
+        uint256 numTickets = (msg.value - DEPOSIT_AMOUNT) / 0.01 ether;
         numTickets = numTickets > MAX_TICKETS ? MAX_TICKETS : numTickets;
         tickets[msg.sender] = numTickets;
 
@@ -95,13 +100,16 @@ contract Lotto is ILotto {
         require(_commit != 0, "Caller has not committed a hash");
 
         // Caller's number must match their commitment.
-        require(keccak256(abi.encodePacked(number)) == _commit, "Number does not match commitment");
+        require(
+            keccak256(abi.encodePacked(number)) == _commit,
+            "Number does not match commitment"
+        );
 
         // Bitwise OR the current revealed number for this round.
         rounds[roundId].seed ^= number;
 
         // Insert the caller address once per ticket purchased.
-        for (uint i = 0; i < tickets[msg.sender]; i++) {
+        for (uint256 i = 0; i < tickets[msg.sender]; i++) {
             participants.push(msg.sender);
         }
 
@@ -124,10 +132,13 @@ contract Lotto is ILotto {
         }
 
         // Check to see if the caller is the winner.
-        require(rounds[_roundId].winner == msg.sender, "You're not the winner :(");
+        require(
+            rounds[_roundId].winner == msg.sender,
+            "You're not the winner :("
+        );
 
         // Transfer the winnings to the caller.
-        uint _pool = rounds[_roundId].pool;
+        uint256 _pool = rounds[_roundId].pool;
         rounds[_roundId].pool = 0;
         payable(msg.sender).transfer(_pool);
 
@@ -135,20 +146,31 @@ contract Lotto is ILotto {
     }
 
     // Check if the current commitment phase has expired (assuming rounds have been initialized).
-    function isCommitPhaseComplete(bytes32 _roundId) public view returns (bool) {
-        return (block.timestamp > rounds[_roundId].startTimestamp + COMMIT_PHASE_LENGTH) || roundId == 0;
+    function isCommitPhaseComplete(bytes32 _roundId)
+        public
+        view
+        returns (bool)
+    {
+        return
+            (block.timestamp >
+                rounds[_roundId].startTimestamp + COMMIT_PHASE_LENGTH) ||
+            roundId == 0;
     }
 
     // Check whether the given round's commit and reveal phases have completed.
     function isRoundComplete(bytes32 _roundId) public view returns (bool) {
-        return block.timestamp > rounds[_roundId].startTimestamp + COMMIT_PHASE_LENGTH + REVEAL_PHASE_LENGTH;
+        return
+            block.timestamp >
+            rounds[_roundId].startTimestamp +
+                COMMIT_PHASE_LENGTH +
+                REVEAL_PHASE_LENGTH;
     }
 
     function nextRound() private {
         // If we have a round in progress, wrap it up.
         if (rounds[roundId].seed != 0 && participants.length > 0) {
             // Get the winner's index from the revealed number.
-            uint winnerIndex = rounds[roundId].seed % participants.length;
+            uint256 winnerIndex = rounds[roundId].seed % participants.length;
             // Set the winner for the round.
             rounds[roundId].winner = participants[winnerIndex];
         }
