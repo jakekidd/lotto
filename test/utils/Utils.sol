@@ -50,7 +50,7 @@ contract Utils is IUtils,DSTest {
         });
     }
 
-    //move block.number forward by a given number of blocks
+    // Move block.number forward by a given number of blocks
     function mineBlocks(uint256 numBlocks) external {
         uint256 targetBlock = block.number + numBlocks;
         vm.roll(targetBlock);

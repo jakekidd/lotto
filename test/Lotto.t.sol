@@ -65,8 +65,6 @@ contract LottoTest is IUtils,DSTest {
         // assert(lotto.tickets(bob.addr) == bobNumTickets);
         console.log("bob tickets", lotto.tickets(bob.addr));
 
-
-
         // Pay insufficient funds for deposit.
 
         // Pay insufficient funds for deposit + ticket payment.
