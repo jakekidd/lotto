@@ -99,7 +99,10 @@ contract Lotto is ILotto {
 
         // Make sure the caller has made a commitment for this round.
         bytes32 _commit = rounds[roundId].commitments[msg.sender];
-        require(_commit != 0, "Caller has not committed a hash");
+        require(_commit != 0, "Caller is missing a commitment");
+
+        // Caller may only reveal once, erase their commitment.
+        rounds[roundId].commitments[msg.sender] = 0;
 
         // Caller's number must match their commitment.
         require(

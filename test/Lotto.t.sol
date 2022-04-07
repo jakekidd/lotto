@@ -65,16 +65,25 @@ contract LottoTest is IUtils,DSTest {
         // // Should be the same, shouldn't start a new round.
         assert(bobRoundId == roundId);
         assert(lotto.tickets(bob.addr) == bobNumTickets);
-
-        // Pay insufficient funds for deposit.
-
-        // Pay insufficient funds for deposit + ticket payment.
-
-        // Paying over the maximum number of tickets should cap it at the maximum.
-
-        // Paying for a decimal number of tickets should round down.
-
-        // You can overwrite a previous commit, but doing so is useless as it erases your previous tickets.
     }
 
+    // TODO: commit tests:
+    // Pay insufficient funds for deposit.
+
+    // Pay insufficient funds for deposit + ticket payment.
+
+    // Paying over the maximum number of tickets should cap it at the maximum.
+
+    // Paying for a decimal number of tickets should round down.
+
+    // You can overwrite a previous commit, but doing so is useless as it erases your previous tickets.
+
+    // TODO: reveal tests:
+    // Happy case.
+
+    // Must reveal during reveal phase, not before or after.
+
+    // Revealing a number that hasn't been committed reverts.
+
+    // Can't reveal twice.
 }
